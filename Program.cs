@@ -104,6 +104,7 @@ namespace SlackFileDownload
                 }
             }
             Console.WriteLine("Total files: {0}", fms.Count);
+            target = Directory.GetCurrentDirectory(); // ensure absolute path
             if (fms.Count > 0)
             {
                 WebClient client = new WebClient();
