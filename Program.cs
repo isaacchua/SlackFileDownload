@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace SlackFileDownload
 {
@@ -20,11 +19,11 @@ namespace SlackFileDownload
         }
         public static int IndexOfNth (this string str, string value, int n, int startIndex, int count)
         {
-            if (n < 1) throw new ArgumentOutOfRangeException("n cannot be less than 1");
+            ArgumentOutOfRangeException.ThrowIfLessThan(n, 1);
             int position = startIndex-1;
             for (int i = 1; i <= n; i++)
             {
-                position = str.IndexOf(value, position+1, count-(position+1 - startIndex));
+                position = str.IndexOf(value, position + 1, count - (position + 1 - startIndex));
                 if (position < 0) return position;
             }
             return position;
@@ -39,11 +38,11 @@ namespace SlackFileDownload
         }
         public static int IndexOfNth (this string str, char value, int n, int startIndex, int count)
         {
-            if (n < 1) throw new ArgumentOutOfRangeException("n cannot be less than 1");
+            ArgumentOutOfRangeException.ThrowIfLessThan(n, 1);
             int position = startIndex-1;
             for (int i = 1; i <= n; i++)
             {
-                position = str.IndexOf(value, position+1, count-(position+1 - startIndex));
+                position = str.IndexOf(value, position + 1, count - (position + 1 - startIndex));
                 if (position < 0) return position;
             }
             return position;
@@ -65,7 +64,7 @@ namespace SlackFileDownload
     {
         public int Compare(FileMessage x, FileMessage y)
         {
-            return String.Compare(x.url_private_download, y.url_private_download);
+            return string.Compare(x.url_private_download, y.url_private_download);
         }
     }
 
@@ -74,23 +73,28 @@ namespace SlackFileDownload
     {
         static void Main(string[] args)
         {
+            // Initialize FileMessage store
             var fms = new SortedSet<FileMessage>(new FileMessageComparer());
+
+            // Set current directory
             string target = args.Length > 0 ? args[0] : Directory.GetCurrentDirectory();
             Directory.SetCurrentDirectory(target);
+
+            // Find all downloadable files
             string[] directories = Directory.GetDirectories(".");
             foreach (string dir in directories)
             {
                 string[] jsons = Directory.GetFiles(dir, "*.json");
                 foreach (string json in jsons)
                 {
-                    Console.WriteLine(@"Processing file: " + json);
+                    Console.WriteLine("Processing file: {0}", json);
                     string jsonString = File.ReadAllText(json);
                     var messages = JsonSerializer.Deserialize<Message[]>(jsonString);
-                    foreach (Message m in messages)
+                    foreach (var m in messages)
                     {
                         if (m.type == @"message" && m.files is not null)
                         {
-                            foreach (FileMessage fm in m.files)
+                            foreach (var fm in m.files)
                             {
                                 if (fm.url_private_download is not null)
                                 {
@@ -104,28 +108,33 @@ namespace SlackFileDownload
                 }
             }
             Console.WriteLine("Total files: {0}", fms.Count);
-            target = Directory.GetCurrentDirectory(); // ensure absolute path
+
+            // Download files
             if (fms.Count > 0)
             {
+                target = Directory.GetCurrentDirectory(); // ensure absolute path
                 WebClient client = new WebClient();
-                foreach (FileMessage fm in fms)
+                foreach (var fm in fms)
                 {
                     string url = fm.url_private_download;
-                    Console.Write(@"Processing URL: " + url);
-                    int dirStart = url.IndexOfNth('/',4)+1;
+                    Console.Write("Processing URL: {0}", url);
+                    int dirStart = url.IndexOfNth('/', 4) + 1;
                     int dirEnd = url.IndexOf('/', dirStart);
-                    string dirName = url.Substring(dirStart, dirEnd-dirStart);
-                    if (String.IsNullOrEmpty(fm.name))
+                    string dirName = url[dirStart..dirEnd];
+
+                    if (string.IsNullOrEmpty(fm.name))
                     {
-                        int fileStart = url.IndexOf('/', dirEnd+1)+1;
+                        int fileStart = url.IndexOf('/', dirEnd + 1) + 1;
                         int fileEnd = url.IndexOf('?', fileStart);
-                        fm.name = url.Substring(fileStart, fileEnd-fileStart);
+                        fm.name = url[fileStart..fileEnd];
                     }
+
                     Directory.SetCurrentDirectory(target);
-                    string dirPath = @"files\" + dirName;
+                    string dirPath = $"files\\{dirName}";
                     Directory.CreateDirectory(dirPath);
                     Directory.SetCurrentDirectory(dirPath);
                     client.DownloadFile(url, fm.name);
+
                     Console.WriteLine(@" (DONE)");
                 }
             }
