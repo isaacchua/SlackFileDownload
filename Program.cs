@@ -112,7 +112,9 @@ namespace SlackFileDownload
             // Download files
             if (fms.Count > 0)
             {
-                target = Directory.GetCurrentDirectory(); // ensure absolute path
+                target = Directory.GetCurrentDirectory() + "\\files"; // ensure absolute path
+                Directory.CreateDirectory(target);
+
                 WebClient client = new WebClient();
                 foreach (var fm in fms)
                 {
@@ -130,9 +132,8 @@ namespace SlackFileDownload
                     }
 
                     Directory.SetCurrentDirectory(target);
-                    string dirPath = $"files\\{dirName}";
-                    Directory.CreateDirectory(dirPath);
-                    Directory.SetCurrentDirectory(dirPath);
+                    Directory.CreateDirectory(dirName);
+                    Directory.SetCurrentDirectory(dirName);
                     client.DownloadFile(url, fm.name);
 
                     Console.WriteLine(@" (DONE)");
