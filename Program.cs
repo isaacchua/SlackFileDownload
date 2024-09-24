@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace SlackFileDownload
 {
+    // Extensions to string
     public static class Extensions
     {
         public static int IndexOfNth (this string str, string value, int n)
@@ -48,10 +49,11 @@ namespace SlackFileDownload
             return position;
         }
     }
+
+    // JSON schema
     public class Message
     {
-        public string item_type { get; set; }
-        public FileMessage item { get; set; }
+        public string type { get; set; }
         public FileMessage[] files { get; set; }
     }
     public class FileMessage
@@ -66,6 +68,8 @@ namespace SlackFileDownload
             return String.Compare(x.url_private_download, y.url_private_download);
         }
     }
+
+    // Main program
     class Program
     {
         static void Main(string[] args)
@@ -74,7 +78,8 @@ namespace SlackFileDownload
             string target = args.Length > 0 ? args[0] : Directory.GetCurrentDirectory();
             Directory.SetCurrentDirectory(target);
             string[] directories = Directory.GetDirectories(".");
-            foreach (string dir in directories) {
+            foreach (string dir in directories)
+            {
                 string[] jsons = Directory.GetFiles(dir, "*.json");
                 foreach (string json in jsons)
                 {
@@ -83,13 +88,7 @@ namespace SlackFileDownload
                     var messages = JsonSerializer.Deserialize<Message[]>(jsonString);
                     foreach (Message m in messages)
                     {
-                        if (m.item_type == "F" && m.item is not null)
-                        {
-                            var success = fms.Add(m.item);
-                            Console.Write(success ? "Added:  " : "Failed: ");
-                            Console.WriteLine(m.item.url_private_download);
-                        }
-                        if (m.files is not null)
+                        if (m.type == @"message" && m.files is not null)
                         {
                             foreach (FileMessage fm in m.files)
                             {
