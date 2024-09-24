@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace SlackFileDownload
@@ -115,7 +115,7 @@ namespace SlackFileDownload
                 target = Directory.GetCurrentDirectory() + "\\files"; // ensure absolute path
                 Directory.CreateDirectory(target);
 
-                WebClient client = new WebClient();
+                var client = new HttpClient();
                 foreach (var fm in fms)
                 {
                     string url = fm.url_private_download;
@@ -134,7 +134,10 @@ namespace SlackFileDownload
                     Directory.SetCurrentDirectory(target);
                     Directory.CreateDirectory(dirName);
                     Directory.SetCurrentDirectory(dirName);
-                    client.DownloadFile(url, fm.name);
+
+                    using (var httpStream = client.GetStreamAsync(url).Result)
+                    using (var fileStream = new FileStream(fm.name, FileMode.Create))
+                    httpStream.CopyTo(fileStream);
 
                     Console.WriteLine(@" (DONE)");
                 }
