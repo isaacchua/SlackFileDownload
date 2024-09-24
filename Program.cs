@@ -92,9 +92,12 @@ namespace SlackFileDownload
                         {
                             foreach (FileMessage fm in m.files)
                             {
-                                var success = fms.Add(fm);
-                                Console.Write(success ? "Added:  " : "Failed: ");
-                                Console.WriteLine(fm.url_private_download);
+                                if (fm.url_private_download is not null)
+                                {
+                                    var success = fms.Add(fm);
+                                    Console.Write(success ? "Added: " : "Failed: ");
+                                    Console.WriteLine(fm.url_private_download);
+                                }
                             }
                         }
                     }
